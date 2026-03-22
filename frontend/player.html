@@ -56,7 +56,7 @@
 
     /* ── PROGRESS ── */
     .prog-wrap{width:100%;max-width:600px;padding:14px 20px 0}
-    .prog-track{width:100%;height:4px;background:var(--s3);border-radius:2px;cursor:pointer;position:relative;transition:height .15s}
+    .prog-track{width:100%;height:4px;background:var(--s3);border-radius:2px;cursor:pointer;position:relative;transition:height .15s;touch-action:none}
     .prog-track:hover{height:6px}
     .prog-fill{height:100%;background:var(--text2);border-radius:2px;width:0%;transition:width .25s linear;position:relative}
     .prog-track:hover .prog-fill{background:var(--green)}
@@ -180,7 +180,7 @@
 
 <!-- PROGRESS -->
 <div class="prog-wrap">
-  <div class="prog-track" id="prog-track" onclick="seekAudio(event)">
+  <div class="prog-track" id="prog-track">
     <div class="prog-fill" id="prog-fill"></div>
   </div>
   <div class="time-row">
@@ -481,12 +481,51 @@ function playUrl(url) {
     resolveAudio = resolve;
   });
 }
+// ── SEEK (click + drag + touch) ──
+let isSeeking = false;
 
-// ── SEEK ──
-function seekAudio(e) {
+function getSeekPct(e) {
   const r = document.getElementById("prog-track").getBoundingClientRect();
-  if (audio.duration) audio.currentTime = ((e.clientX - r.left) / r.width) * audio.duration;
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  return Math.max(0, Math.min(1, (clientX - r.left) / r.width));
 }
+
+function applySeek(e) {
+  if (audio.duration) {
+    audio.currentTime = getSeekPct(e) * audio.duration;
+  }
+}
+
+const progTrack = document.getElementById("prog-track");
+
+// ── MOUSE ──
+progTrack.addEventListener("mousedown", e => {
+  isSeeking = true;
+  applySeek(e);
+  e.preventDefault(); // stops text selection during drag
+});
+document.addEventListener("mousemove", e => {
+  if (!isSeeking) return;
+  applySeek(e);
+});
+document.addEventListener("mouseup", () => {
+  isSeeking = false;
+});
+
+// ── TOUCH ──
+progTrack.addEventListener("touchstart", e => {
+  isSeeking = true;
+  applySeek(e);
+  e.preventDefault(); // stops page scroll during drag
+}, { passive: false }); // passive:false needed to allow preventDefault
+document.addEventListener("touchmove", e => {
+  if (!isSeeking) return;
+  applySeek(e);
+  e.preventDefault(); // stops page scroll while dragging
+}, { passive: false });
+document.addEventListener("touchend", () => {
+  isSeeking = false;
+});
 
 // ── VOLUME ──
 function setVol(e) {
