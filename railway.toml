@@ -1,0 +1,9 @@
+[build]
+builder = "nixpacks"
+
+[build.nixpacksPlan.phases.setup]
+nixPkgs = ["ffmpeg", "python311"]
+
+[deploy]
+startCommand = "gunicorn --bind 0.0.0.0:$PORT --timeout 120 --chdir backend server:app"
+restartPolicyType = "on_failure"
