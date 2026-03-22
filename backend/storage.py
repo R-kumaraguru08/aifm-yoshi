@@ -30,6 +30,11 @@ def upload_blob(data: bytes, filename: str, container: str, content_type: str) -
         print(f"Blob error: {e}")
         return ""
 
+PERMANENT_FILES = [
+    "yoshi_fixed_intro.mp3",
+    "boys_iv_small.mp3",
+]
+
 def delete_day_blobs(day: str):
     deleted = 0
     try:
@@ -37,6 +42,10 @@ def delete_day_blobs(day: str):
             c     = blob_service.get_container_client(container)
             blobs = list(c.list_blobs())
             for blob in blobs:
+                # Skip permanent files
+                if any(p in blob.name for p in PERMANENT_FILES):
+                    print(f"⏭️ Skipping permanent: {blob.name}")
+                    continue
                 if day in blob.name:
                     c.delete_blob(blob.name)
                     deleted += 1
@@ -44,7 +53,6 @@ def delete_day_blobs(day: str):
         print(f"🗑️ Total deleted: {deleted} blobs for {day}")
     except Exception as e:
         print(f"Delete error: {e}")
-
 # =============================================
 # 🌌 COSMOS DB
 # =============================================
