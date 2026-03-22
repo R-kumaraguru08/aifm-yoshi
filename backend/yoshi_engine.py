@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv("../.env")
 
-groq_client = Groq(api_key=os.getenv("GROQ_KEY"))
+groq_client = Groq(api_key=os.getenv("GROQ_KEY") or os.getenv("GROQ_API_KEY", ""))
 HF_KEY      = os.getenv("HF_KEY")
 TEMP_DIR = Path("/tmp/aifm_audio")
 TEMP_DIR.mkdir(exist_ok=True)
