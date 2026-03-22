@@ -5,6 +5,7 @@ from datetime import datetime
 import os
 import shutil
 import subprocess
+import threading
 from dotenv import load_dotenv
 from yoshi_engine import generate_speech
 from storage import (
@@ -24,8 +25,8 @@ CORS(app)
 # =============================================
 # 📁 PATHS
 # =============================================
-BASE_DIR     = Path(__file__).parent        # /app/backend
-FRONTEND_DIR = BASE_DIR.parent / "frontend" # /app/../frontend
+BASE_DIR     = Path(__file__).parent
+FRONTEND_DIR = BASE_DIR.parent / "frontend"
 TEMP_DIR     = Path("/tmp/aifm_audio")
 TEMP_DIR.mkdir(exist_ok=True)
 MAX_DAILY    = 100
@@ -40,10 +41,10 @@ def debug():
         for f in fs:
             files.append(os.path.join(root, f))
     return jsonify({
-        "base_dir":     str(BASE_DIR),
-        "frontend_dir": str(FRONTEND_DIR),
+        "base_dir":        str(BASE_DIR),
+        "frontend_dir":    str(FRONTEND_DIR),
         "frontend_exists": FRONTEND_DIR.exists(),
-        "files": files[:50]
+        "files":           files[:50]
     })
 
 # =============================================
@@ -229,6 +230,8 @@ def upload():
 @app.route("/show-data")
 def show_data():
     show = load_today_show()
+    if not show.get("intro_url"):
+        threading.Thread(target=prepare_intro, daemon=True).start()
     return jsonify({
         "date":        show["date"],
         "total":       show["total"],
@@ -294,11 +297,8 @@ scheduler.start()
 atexit.register(lambda: scheduler.shutdown())
 
 # =============================================
-# 🚀 START
+# 🚀 START — background thread so server starts fast
 # =============================================
-if __name__ == "__main__":
-    print("🎙️ AI FM Starting...")
-    print(f"📁 Frontend: {FRONTEND_DIR} (exists: {FRONTEND_DIR.exists()})")
-    print("⏰ Auto reset at midnight daily!")
-    prepare_intro()
-    app.run(debug=False, port=5000)         
+print("🎙️ AI FM Starting...")
+print("⏰ Auto reset at midnight daily!")
+threading.Thread(target=prepare_intro, daemon=True).start()
