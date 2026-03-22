@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI FM — Show History</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#0d0d0d;color:#fff;font-family:'Segoe UI',Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:0 0 40px}
+    .hero{width:100%;max-width:600px}
+    .hero img{width:100%;border-radius:0 0 20px 20px;display:block}
+    .main{width:100%;max-width:600px;padding:0 16px}
+    .header{margin-top:16px;text-align:center}
+    .header h1{font-size:1.5rem;font-weight:bold;color:#ff6b6b}
+    .header p{font-size:.85rem;color:#555;margin-top:4px}
+    .nav{display:flex;gap:10px;margin-top:14px}
+    .btn-nav{flex:1;padding:12px;border-radius:50px;font-size:.88rem;cursor:pointer;border:none;transition:all .2s;text-align:center;text-decoration:none;display:block}
+    .btn-primary{background:linear-gradient(135deg,#ff6b6b,#ff3333);color:#fff;font-weight:bold}
+    .btn-outline{background:transparent;color:#ff6b6b;border:1px solid #ff6b6b33}
+    .btn-outline:hover{background:#ff6b6b11}
+    .stats-row{display:flex;gap:10px;margin-top:14px}
+    .stat-card{flex:1;background:#111;border:1px solid #1a1a1a;border-radius:14px;padding:16px;text-align:center}
+    .stat-num{font-size:1.8rem;font-weight:bold;color:#ff6b6b}
+    .stat-label{font-size:.72rem;color:#555;margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+    .section-title{font-size:.75rem;color:#555;letter-spacing:1px;text-transform:uppercase;margin:20px 0 10px}
+    .day-card{background:#111;border:1px solid #1a1a1a;border-radius:14px;margin-bottom:8px;overflow:hidden}
+    .day-card:hover{border-color:#ff6b6b22}
+    .day-header{display:flex;align-items:center;gap:14px;padding:16px;cursor:pointer;user-select:none}
+    .day-header:hover{background:#161616}
+    .day-date{min-width:100px}
+    .date-main{font-size:.95rem;font-weight:bold}
+    .date-day{font-size:.72rem;color:#555;margin-top:2px}
+    .day-bar{flex:1}
+    .bar-wrap{background:#1a1a1a;border-radius:10px;height:6px;overflow:hidden}
+    .bar-fill{background:linear-gradient(90deg,#ff6b6b,#ff3333);height:100%;border-radius:10px;transition:width .6s}
+    .bar-count{font-size:.72rem;color:#888;margin-top:4px}
+    .day-badge{font-size:.7rem;padding:4px 10px;border-radius:20px;font-weight:bold;white-space:nowrap}
+    .badge-live{background:#ff6b6b22;color:#ff6b6b;border:1px solid #ff6b6b33}
+    .badge-played{background:#0a2a0a;color:#4caf50;border:1px solid #4caf5033}
+    .badge-pending{background:#1a1a2e;color:#888;border:1px solid #333}
+    .chevron{color:#555;font-size:.8rem;transition:transform .3s}
+    .chevron.open{transform:rotate(180deg)}
+    .sub-list{border-top:1px solid #1a1a1a;padding:10px 16px;display:none}
+    .sub-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #111}
+    .sub-item:last-child{border-bottom:none}
+    .sub-num{font-size:.72rem;color:#ff6b6b;font-weight:bold;min-width:28px}
+    .sub-info{flex:1}
+    .sub-name{font-size:.88rem;font-weight:500;color:#fff}
+    .sub-cap{font-size:.72rem;color:#555;margin-top:2px}
+    .sub-time{font-size:.68rem;color:#333;white-space:nowrap}
+    .no-subs{color:#333;font-size:.8rem;padding:8px 0}
+    .empty{color:#333;text-align:center;padding:40px;font-size:.9rem}
+    .loading{color:#555;text-align:center;padding:40px;font-size:.9rem}
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <img src="/yoshi.png" alt="RJ Yoshi" onerror="this.style.display='none'">
+</div>
+
+<div class="main">
+  <div class="header">
+    <h1>📅 Show History</h1>
+    <p>Every voice ever heard on AI FM</p>
+  </div>
+
+  <div class="nav">
+    <a href="/"       class="btn-nav btn-outline">🎤 Upload</a>
+    <a href="/player" class="btn-nav btn-primary">📻 Today's Show</a>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num" id="total-shows">—</div>
+      <div class="stat-label">Total Shows</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="total-voices">—</div>
+      <div class="stat-label">Total Voices</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="avg-voices">—</div>
+      <div class="stat-label">Avg Per Day</div>
+    </div>
+  </div>
+
+  <div class="section-title">Past Shows — Click to expand</div>
+  <div id="history-list"><div class="loading">Loading history...</div></div>
+</div>
+
+<script>
+async function loadHistory(){
+  try{
+    const r    = await fetch("/history-data");
+    const data = await r.json();
+    const list = document.getElementById("history-list");
+
+    if(!data.length){
+      list.innerHTML='<div class="empty">No show history yet!<br>Start uploading voices! 🎤</div>';
+      return;
+    }
+
+    const totalShows  = data.length;
+    const totalVoices = data.reduce((a,d)=>a+(d.total||0),0);
+    const avgVoices   = totalShows ? Math.round(totalVoices/totalShows) : 0;
+    const maxVoices   = Math.max(...data.map(d=>d.total||0), 1);
+    const todayStr    = new Date().toISOString().split("T")[0];
+
+    document.getElementById("total-shows").textContent  = totalShows;
+    document.getElementById("total-voices").textContent = totalVoices;
+    document.getElementById("avg-voices").textContent   = avgVoices;
+
+    list.innerHTML = data.map((d, di) => {
+      const dateObj  = new Date(d.date);
+      const dateMain = dateObj.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
+      const dateDay  = dateObj.toLocaleDateString("en-IN",{weekday:"long"});
+      const barWidth = Math.round(((d.total||0) / maxVoices) * 100);
+      const isToday  = d.date === todayStr;
+      const subs     = d.submissions || [];
+
+      const badgeClass = isToday ? "badge-live" : d.show_played ? "badge-played" : "badge-pending";
+      const badgeText  = isToday ? "🔴 Live"   : d.show_played ? "✅ Played"    : "⏳ Pending";
+
+      // ✅ Show only: number, name, caption, time — no download/play
+      const subRows = subs.length ? subs.map(s => {
+        const time = s.submitted_at
+          ? new Date(s.submitted_at).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})
+          : "";
+        return `
+          <div class="sub-item">
+            <div class="sub-num">#${s.order}</div>
+            <div class="sub-info">
+              <div class="sub-name">${s.name}</div>
+              <div class="sub-cap">About: ${s.caption}</div>
+            </div>
+            <div class="sub-time">${time}</div>
+          </div>
+        `;
+      }).join("") : '<div class="no-subs">No submissions</div>';
+
+      return `
+        <div class="day-card">
+          <div class="day-header" onclick="toggle(${di})">
+            <div class="day-date">
+              <div class="date-main">${isToday ? "Today" : dateMain}</div>
+              <div class="date-day">${isToday ? "" : dateDay}</div>
+            </div>
+            <div class="day-bar">
+              <div class="bar-wrap">
+                <div class="bar-fill" style="width:${barWidth}%"></div>
+              </div>
+              <div class="bar-count">${d.total||0} voices</div>
+            </div>
+            <div class="day-badge ${badgeClass}">${badgeText}</div>
+            <div class="chevron" id="chev-${di}">▼</div>
+          </div>
+          <div class="sub-list" id="sub-${di}">
+            ${subRows}
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    // Auto open today
+    const todayIdx = data.findIndex(d => d.date === todayStr);
+    if(todayIdx >= 0) toggle(todayIdx);
+
+  } catch(e) {
+    document.getElementById("history-list").innerHTML =
+      '<div class="empty">❌ Error loading history!</div>';
+  }
+}
+
+function toggle(i){
+  const sub  = document.getElementById(`sub-${i}`);
+  const chev = document.getElementById(`chev-${i}`);
+  if(!sub) return;
+  const open = sub.style.display === "block";
+  sub.style.display = open ? "none" : "block";
+  chev.classList.toggle("open", !open);
+}
+
+loadHistory();
+</script>
+</body>
+</html>

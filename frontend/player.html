@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI FM — RJ Yoshi Live</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #121212;
+      --s1:       #181818;
+      --s2:       #282828;
+      --s3:       #333333;
+      --green:    #1db954;
+      --green2:   #1ed760;
+      --red:      #ff6b6b;
+      --text:     #ffffff;
+      --text2:    #b3b3b3;
+      --text3:    #535353;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding-bottom:40px;overflow-x:hidden}
+
+    /* ── TOPBAR ── */
+    .topbar{width:100%;max-width:600px;display:flex;align-items:center;justify-content:space-between;padding:18px 20px 0}
+    .topbar-logo{font-size:.72rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--text2)}
+    .topbar-nav{display:flex;gap:8px}
+    .topbar-nav a{color:var(--text2);text-decoration:none;font-size:.76rem;font-weight:500;padding:6px 14px;border-radius:50px;border:1px solid var(--s3);transition:all .2s}
+    .topbar-nav a:hover{color:var(--text);border-color:var(--text2)}
+
+    /* ── ALBUM ART ── */
+   .art-wrap{width:100%;max-width:600px;padding:0;}
+   .album{width:100%;max-width:600px;height:auto;border-radius:0 0 20px 20px;background:var(--s2);overflow:hidden;position:relative;box-shadow:0 24px 56px rgba(0,0,0,.7);transition:transform .4s ease,box-shadow .4s ease}
+    .album.pulse{transform:scale(1.05);box-shadow:0 32px 72px rgba(0,0,0,.8)}
+    .album img{width:100%;height:100%;object-fit:cover;display:block}
+    .album-glow{position:absolute;inset:0;background:linear-gradient(135deg,rgba(29,185,84,.1),rgba(255,107,107,.08))}
+    .live-pill{position:absolute;top:10px;right:10px;background:var(--red);color:#fff;font-size:.55rem;font-weight:700;letter-spacing:2px;padding:3px 8px;border-radius:4px;text-transform:uppercase;animation:blink 1.8s infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+
+    /* ── YOSHI BANNER ── */
+    .yoshi-banner{display:none;background:linear-gradient(135deg,#0a2218,#0d1f14);border:1px solid #1db95430;border-radius:10px;padding:11px 16px;margin:14px 20px 0;max-width:560px;width:calc(100% - 40px)}
+    .yoshi-banner-lbl{font-size:.6rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--green);margin-bottom:3px}
+    .yoshi-banner-txt{font-size:.8rem;color:var(--text2);line-height:1.5}
+
+    /* ── NOW PLAYING ── */
+    .now{width:100%;max-width:600px;padding:16px 20px 0}
+    .now-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+    .now-left{flex:1;min-width:0}
+    .now-name{font-size:1.3rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+    .now-topic{font-size:.85rem;color:var(--text2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .now-tag{display:inline-block;background:var(--s2);color:var(--text3);font-size:.62rem;font-weight:700;padding:3px 9px;border-radius:4px;margin-top:6px;letter-spacing:.5px;text-transform:uppercase}
+    .now-tag.live-tag{background:#ff6b6b22;color:var(--red);border:1px solid #ff6b6b33}
+    .heart{background:none;border:none;cursor:pointer;color:var(--text3);font-size:1.4rem;transition:all .2s;padding:4px;flex-shrink:0}
+    .heart:hover{color:var(--green);transform:scale(1.15)}
+    .heart.on{color:var(--green)}
+
+    /* ── PROGRESS ── */
+    .prog-wrap{width:100%;max-width:600px;padding:14px 20px 0}
+    .prog-track{width:100%;height:4px;background:var(--s3);border-radius:2px;cursor:pointer;position:relative;transition:height .15s}
+    .prog-track:hover{height:6px}
+    .prog-fill{height:100%;background:var(--text2);border-radius:2px;width:0%;transition:width .25s linear;position:relative}
+    .prog-track:hover .prog-fill{background:var(--green)}
+    .prog-fill::after{content:'';position:absolute;right:-6px;top:50%;transform:translateY(-50%) scale(0);width:12px;height:12px;background:var(--text);border-radius:50%;transition:transform .15s}
+    .prog-track:hover .prog-fill::after{transform:translateY(-50%) scale(1)}
+    .time-row{display:flex;justify-content:space-between;margin-top:5px}
+    .time-lbl{font-size:.67rem;color:var(--text3)}
+
+    /* ── MAIN CONTROLS ── */
+    .controls{width:100%;max-width:600px;padding:12px 20px 0;display:flex;align-items:center;justify-content:center;gap:28px}
+    .ctrl{background:none;border:none;cursor:pointer;color:var(--text2);display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;transition:all .15s}
+    .ctrl:hover{color:var(--text);transform:scale(1.1)}
+    .ctrl svg{width:22px;height:22px;fill:currentColor}
+    .play-btn{width:54px;height:54px;background:var(--text);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:all .15s;flex-shrink:0}
+    .play-btn:hover{transform:scale(1.07);background:var(--green2)}
+    .play-btn svg{width:24px;height:24px;fill:#000}
+    .play-btn:disabled{background:var(--s3);cursor:not-allowed;transform:none;box-shadow:none}
+    .play-btn:disabled svg{fill:var(--text3)}
+
+    /* ── VOLUME ── */
+    .vol-wrap{width:100%;max-width:600px;padding:10px 20px 0;display:flex;align-items:center;gap:10px}
+    .vol-ico{font-size:.9rem;color:var(--text2);flex-shrink:0}
+    .vol-track{flex:1;height:4px;background:var(--s3);border-radius:2px;cursor:pointer;transition:height .15s}
+    .vol-track:hover{height:6px}
+    .vol-fill{height:100%;background:var(--text2);border-radius:2px;width:80%}
+    .vol-track:hover .vol-fill{background:var(--green)}
+
+    /* ── START / STATUS ── */
+    .action-row{width:100%;max-width:600px;padding:14px 20px 0;display:flex;gap:10px}
+    .btn-start{flex:2;background:linear-gradient(135deg,var(--red),#ff3333);color:#fff;border:none;border-radius:50px;padding:13px;font-size:.95rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px #ff6b6b33;transition:all .2s}
+    .btn-start:hover{transform:scale(1.02)}
+    .btn-start:disabled{background:var(--s2);cursor:not-allowed;box-shadow:none;transform:none;color:var(--text3)}
+    .btn-up{flex:1;background:transparent;color:var(--red);border:1px solid #ff6b6b33;border-radius:50px;padding:13px;font-size:.88rem;cursor:pointer;transition:all .2s;font-weight:500}
+    .btn-up:hover{background:#ff6b6b11}
+    .status-row{width:100%;max-width:600px;padding:6px 20px 0;text-align:center}
+    .status-txt{font-size:.78rem;color:var(--text3);min-height:18px}
+
+    /* ── QUEUE ── */
+    .queue-section{width:100%;max-width:600px;padding:22px 20px 0}
+    .queue-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .queue-title{font-size:.67rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2)}
+    .queue-count{font-size:.7rem;color:var(--text3)}
+
+    .qi{display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:8px;cursor:pointer;transition:background .15s;position:relative}
+    .qi:hover{background:var(--s2)}
+    .qi.active{background:var(--s2)}
+    .qi.active .qi-name{color:var(--green)}
+    .qi.active .qi-num{color:var(--green)}
+    .qi.done{opacity:.4}
+
+    .qi-num{font-size:.74rem;color:var(--text3);min-width:22px;text-align:center;font-weight:500;flex-shrink:0}
+    .qi-art{width:42px;height:42px;border-radius:5px;background:var(--s3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.1rem;overflow:hidden}
+    .qi-info{flex:1;min-width:0}
+    .qi-name{font-size:.86rem;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .qi-topic{font-size:.7rem;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .qi-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+    .btn-qi-play{background:var(--green);color:#000;border:none;border-radius:5px;padding:5px 12px;font-size:.72rem;font-weight:700;cursor:pointer;transition:all .2s}
+    .btn-qi-play:hover{background:var(--green2);transform:scale(1.05)}
+    .btn-qi-dl{color:var(--text2);text-decoration:none;font-size:.72rem;font-weight:600;padding:5px 10px;border-radius:5px;background:var(--s3);transition:all .2s}
+    .btn-qi-dl:hover{background:var(--s2);color:var(--text)}
+    .qi-time{font-size:.68rem;color:var(--text3);white-space:nowrap;flex-shrink:0}
+
+    /* Equalizer */
+    .eq{display:flex;align-items:flex-end;gap:2px;height:14px}
+    .eq span{width:3px;background:var(--green);border-radius:1px;animation:eq .7s ease infinite alternate}
+    .eq span:nth-child(1){animation-duration:.55s;height:6px}
+    .eq span:nth-child(2){animation-duration:.85s;height:12px}
+    .eq span:nth-child(3){animation-duration:.5s;height:14px}
+    .eq span:nth-child(4){animation-duration:.65s;height:8px}
+    @keyframes eq{from{transform:scaleY(.2)}to{transform:scaleY(1)}}
+    .eq.paused span{animation-play-state:paused}
+
+    /* Empty / Loading */
+    .empty-msg{text-align:center;padding:40px 20px;color:var(--text2)}
+    .empty-msg .ico{font-size:2.2rem;margin-bottom:10px}
+    .empty-msg h3{font-size:.95rem;font-weight:700;margin-bottom:5px}
+    .empty-msg p{font-size:.8rem;color:var(--text3)}
+
+    audio{display:none}
+    ::-webkit-scrollbar{width:5px}
+    ::-webkit-scrollbar-thumb{background:var(--s3);border-radius:3px}
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <span class="topbar-logo">🎙️ AI FM</span>
+  <div class="topbar-nav">
+    <a href="/">🎤 Upload</a>
+    <a href="/history">📅 History</a>
+  </div>
+</div>
+
+<!-- ALBUM ART -->
+<div class="art-wrap">
+  <div class="album" id="album">
+    <img src="/yoshi.png" alt="RJ Yoshi" width=auto height=auto  onerror="this.style.display='none'">
+    <div class="album-glow"></div>
+    <div class="live-pill">LIVE</div>
+  </div>
+</div>
+
+<!-- YOSHI BANNER (only for opening intro) -->
+<div class="yoshi-banner" id="yoshi-banner">
+  <div class="yoshi-banner-lbl">🎙️ RJ Yoshi Says</div>
+  <div class="yoshi-banner-txt" id="yoshi-banner-txt">—</div>
+</div>
+
+<!-- NOW PLAYING -->
+<div class="now">
+  <div class="now-row">
+    <div class="now-left">
+      <div class="now-name"  id="now-name">AI FM</div>
+      <div class="now-topic" id="now-topic">Your Voice, Your World</div>
+      <div class="now-tag"   id="now-tag">Ready</div>
+    </div>
+    <button class="heart" id="heart" onclick="toggleHeart()">♡</button>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="prog-wrap">
+  <div class="prog-track" id="prog-track" onclick="seekAudio(event)">
+    <div class="prog-fill" id="prog-fill"></div>
+  </div>
+  <div class="time-row">
+    <span class="time-lbl" id="t-cur">0:00</span>
+    <span class="time-lbl" id="t-dur">0:00</span>
+  </div>
+</div>
+
+<!-- MAIN CONTROLS -->
+<div class="controls">
+  <button class="ctrl" onclick="prevVoice()" title="Previous">
+    <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+  </button>
+  <button class="play-btn" id="play-btn" onclick="togglePlayPause()" disabled>
+    <svg id="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+  </button>
+  <button class="ctrl" onclick="nextVoice()" title="Next">
+    <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zm2-8.14L11.03 12 8 14.14V9.86zM16 6h2v12h-2z"/></svg>
+  </button>
+</div>
+
+<!-- VOLUME -->
+<div class="vol-wrap">
+  <span class="vol-ico">🔈</span>
+  <div class="vol-track" id="vol-track" onclick="setVol(event)">
+    <div class="vol-fill" id="vol-fill"></div>
+  </div>
+  <span class="vol-ico">🔊</span>
+</div>
+
+<!-- START / UPLOAD -->
+<div class="action-row">
+  <button class="btn-start" id="btn-start" onclick="startShow()">▶️ Start Show</button>
+  <button class="btn-up" onclick="location.href='/'">🎤 Upload</button>
+</div>
+<div class="status-row">
+  <div class="status-txt" id="status-txt">Loading show...</div>
+</div>
+
+<!-- QUEUE -->
+<div class="queue-section">
+  <div class="queue-hdr">
+    <span class="queue-title">Today's Speakers</span>
+    <span class="queue-count" id="queue-count">—</span>
+  </div>
+  <div id="queue-list">
+    <div class="empty-msg">
+      <div class="ico">📻</div>
+      <h3>Loading today's show...</h3>
+      <p>RJ Yoshi is warming up the mic!</p>
+    </div>
+  </div>
+</div>
+
+<audio id="audio" preload="auto"></audio>
+
+<script>
+// ── STATE ──
+let showData  = null;
+let curIdx    = -1;       // index in showData.submissions (-1 = yoshi intro)
+let playing   = false;
+let showRunning = false;
+let isPaused  = false;
+let liked     = false;
+let progInt   = null;
+let fakeProgress = 0;
+let resolveAudio = null; // for pause/resume in show loop
+
+const audio    = document.getElementById("audio");
+const progFill = document.getElementById("prog-fill");
+const tCur     = document.getElementById("t-cur");
+const tDur     = document.getElementById("t-dur");
+const volFill  = document.getElementById("vol-fill");
+const album    = document.getElementById("album");
+const playBtn  = document.getElementById("play-btn");
+const playIcon = document.getElementById("play-icon");
+
+const fmt = s => isNaN(s)||s<0 ? "0:00" : `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,"0")}`;
+
+// ── LOAD SHOW ──
+async function loadShow() {
+  try {
+    const r = await fetch("/show-data");
+    showData = await r.json();
+    const subs = showData.submissions || [];
+
+    document.getElementById("queue-count").textContent = `${subs.length} voice${subs.length!==1?"s":""}`;
+
+    if (subs.length > 0) {
+      document.getElementById("now-topic").textContent = `${subs.length} speakers ready`;
+      document.getElementById("now-tag").textContent   = "Click Start Show ↓";
+      document.getElementById("status-txt").textContent = `${subs.length} voice${subs.length!==1?"s":""} queued — press Start!`;
+      document.getElementById("btn-start").disabled = false;
+      playBtn.disabled = false;
+    } else {
+      document.getElementById("now-topic").textContent = "No uploads yet";
+      document.getElementById("now-tag").textContent   = "Upload your voice!";
+      document.getElementById("status-txt").textContent = "Be the first to go live! 🎤";
+    }
+    renderQueue();
+  } catch(e) {
+    document.getElementById("status-txt").textContent = "❌ Error loading show";
+  }
+}
+
+// ── RENDER QUEUE ──
+function renderQueue() {
+  const subs = showData?.submissions || [];
+  if (!subs.length) {
+    document.getElementById("queue-list").innerHTML = `
+      <div class="empty-msg">
+        <div class="ico">🎤</div>
+        <h3>No voices today!</h3>
+        <p>Be the first to go live on AI FM</p>
+      </div>`;
+    return;
+  }
+
+  document.getElementById("queue-list").innerHTML = subs.map((s, i) => {
+    const isActive = i === curIdx && playing;
+    const isDone   = i < curIdx && showRunning;
+    const time     = s.submitted_at
+      ? new Date(s.submitted_at).toLocaleTimeString("en-IN", {hour:"2-digit", minute:"2-digit"})
+      : "";
+
+    return `
+      <div class="qi ${isActive?"active":""} ${isDone?"done":""}" id="qi-${i}" onclick="playDirect(${i})">
+        <div class="qi-num">
+          ${isActive && playing
+            ? `<div class="eq ${isPaused?"paused":""}"><span></span><span></span><span></span><span></span></div>`
+            : `#${s.order}`}
+        </div>
+        <div class="qi-art">🎤</div>
+        <div class="qi-info">
+          <div class="qi-name">${s.name}</div>
+          <div class="qi-topic">${s.caption}</div>
+        </div>
+        <div class="qi-actions">
+          <button class="btn-qi-play" onclick="event.stopPropagation();playDirect(${i})">
+            ${isActive && playing && !isPaused ? "⏸" : "▶"}
+          </button>
+          ${s.audio_url
+            ? `<a class="btn-qi-dl" href="${s.audio_url}" download="${s.name}_aifm.mp3" onclick="event.stopPropagation()">⬇</a>`
+            : ""}
+        </div>
+        <div class="qi-time">${time}</div>
+      </div>`;
+  }).join("");
+}
+
+// ── UPDATE NOW PLAYING ──
+function setNow(name, topic, tag, isLive=false) {
+  document.getElementById("now-name").textContent  = name;
+  document.getElementById("now-topic").textContent = topic;
+  const tagEl = document.getElementById("now-tag");
+  tagEl.textContent = tag;
+  tagEl.className   = "now-tag" + (isLive ? " live-tag" : "");
+}
+
+// ── PLAY/PAUSE TOGGLE ──
+function togglePlayPause() {
+  if (!showRunning) { startShow(); return; }
+  if (audio.paused) {
+    audio.play().catch(()=>{});
+  } else {
+    audio.pause();
+  }
+}
+
+function setPlayIcon(isPlaying) {
+  playing = isPlaying;
+  album.classList.toggle("pulse", isPlaying);
+  playIcon.innerHTML = isPlaying
+    ? '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'
+    : '<path d="M8 5v14l11-7z"/>';
+  renderQueue();
+}
+
+// ── PREV / NEXT ──
+function prevVoice() {
+  if (!showData) return;
+  if (audio.currentTime > 3) { audio.currentTime = 0; return; }
+  const prev = Math.max(0, curIdx - 1);
+  playDirect(prev);
+}
+function nextVoice() {
+  if (!showData) return;
+  const next = curIdx + 1;
+  if (next < showData.submissions.length) playDirect(next);
+  else { audio.pause(); setPlayIcon(false); document.getElementById("status-txt").textContent = "Show complete! 🎉"; }
+}
+
+// ── PLAY DIRECT (click on queue item) ──
+async function playDirect(i) {
+  if (!showData) return;
+  const sub = showData.submissions[i];
+  if (!sub) return;
+
+  // Stop current
+  audio.pause();
+  audio.src = "";
+  showRunning = true;
+  curIdx = i;
+
+  setNow(sub.name, sub.caption, `🎤 Voice #${sub.order}`, true);
+  hideBanner();
+  document.getElementById("status-txt").textContent = `Now playing: ${sub.name}`;
+  document.getElementById("btn-start").textContent  = "▶️ Playing...";
+  document.getElementById("btn-start").disabled     = true;
+
+  // Play ONLY the user's voice — NO Yoshi intro for direct play
+  await playUrl(sub.audio_url);
+
+  document.getElementById("btn-start").disabled = false;
+  document.getElementById("btn-start").textContent = "▶️ Start Show";
+  document.getElementById("status-txt").textContent = "";
+  setNow("AI FM", "Ready", "Select a voice or Start Show");
+  setPlayIcon(false);
+  renderQueue();
+}
+
+// ── START FULL SHOW ──
+async function startShow() {
+  if (!showData || !showData.submissions.length) {
+    alert("No voices uploaded yet!");
+    return;
+  }
+  if (showRunning) return;
+
+  showRunning = true;
+  isPaused    = false;
+
+  document.getElementById("btn-start").disabled    = true;
+  document.getElementById("btn-start").textContent = "▶️ Playing...";
+  playBtn.disabled = false;
+
+  // 1. Yoshi's opening intro (show banner)
+  if (showData.intro_url) {
+    setNow("RJ Yoshi", "Welcome to AI FM!", "🎙️ Opening", false);
+    showBanner(showData.intro_text || "");
+    document.getElementById("status-txt").textContent = "🎙️ RJ Yoshi opening the show...";
+    curIdx = -1;
+    renderQueue();
+    await playUrl(showData.intro_url);
+    hideBanner();
+    await gap(700);
+  }
+
+  // 2. Each submission: Yoshi AI intro (banner) → user voice (no banner)
+  for (let i = 0; i < showData.submissions.length; i++) {
+    curIdx = i;
+    const sub = showData.submissions[i];
+
+    // Yoshi AI intro for this user
+    if (sub.intro_url) {
+      setNow(sub.name, sub.caption, `🎙️ Yoshi Intro`, false);
+      showBanner(sub.intro_text || "");
+      document.getElementById("status-txt").textContent = `🎙️ Yoshi introducing ${sub.name}...`;
+      renderQueue();
+      await playUrl(sub.intro_url);
+      hideBanner();
+      await gap(300);
+    }
+
+    // User's voice — NO banner
+    setNow(sub.name, sub.caption, `🎤 Voice #${sub.order}`, true);
+    hideBanner();
+    document.getElementById("status-txt").textContent = `🔴 Now live: ${sub.name} — ${sub.caption}`;
+    renderQueue();
+    scrollTo(i);
+    await playUrl(sub.audio_url);
+    await gap(700);
+  }
+
+  // Done
+  showRunning = false;
+  curIdx      = -1;
+  setNow("AI FM", "Today's show is complete! 🎉", `${showData.total} voices heard`);
+  hideBanner();
+  document.getElementById("status-txt").textContent  = "Come back tomorrow for a new show!";
+  document.getElementById("btn-start").disabled       = false;
+  document.getElementById("btn-start").textContent   = "🔄 Replay Show";
+  setPlayIcon(false);
+  renderQueue();
+}
+
+// ── PLAY URL (promise, respects pause) ──
+function playUrl(url) {
+  return new Promise(resolve => {
+    if (!url) return resolve();
+    audio.src = url;
+    audio.load();
+    audio.oncanplaythrough = () => {
+      if (!isPaused) audio.play().catch(() => resolve());
+    };
+    audio.onended = () => resolve();
+    audio.onerror = () => { setTimeout(resolve, 500); };
+    resolveAudio = resolve;
+  });
+}
+
+// ── SEEK ──
+function seekAudio(e) {
+  const r = document.getElementById("prog-track").getBoundingClientRect();
+  if (audio.duration) audio.currentTime = ((e.clientX - r.left) / r.width) * audio.duration;
+}
+
+// ── VOLUME ──
+function setVol(e) {
+  const r = document.getElementById("vol-track").getBoundingClientRect();
+  const v = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+  audio.volume     = v;
+  volFill.style.width = (v * 100) + "%";
+}
+
+// ── HEART ──
+function toggleHeart() {
+  liked = !liked;
+  const b = document.getElementById("heart");
+  b.textContent = liked ? "♥" : "♡";
+  b.classList.toggle("on", liked);
+}
+
+// ── BANNER ──
+function showBanner(txt) {
+  const b = document.getElementById("yoshi-banner");
+  document.getElementById("yoshi-banner-txt").textContent = txt;
+  b.style.display = txt ? "block" : "none";
+}
+function hideBanner() {
+  document.getElementById("yoshi-banner").style.display = "none";
+}
+
+// ── SCROLL TO QUEUE ITEM ──
+function scrollTo(i) {
+  const el = document.getElementById(`qi-${i}`);
+  if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+// ── GAP ──
+function gap(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── AUDIO EVENTS ──
+audio.addEventListener("timeupdate", () => {
+  if (!audio.duration) return;
+  progFill.style.width = (audio.currentTime / audio.duration * 100) + "%";
+  tCur.textContent     = fmt(audio.currentTime);
+  tDur.textContent     = fmt(audio.duration);
+});
+audio.addEventListener("play",  () => setPlayIcon(true));
+audio.addEventListener("pause", () => setPlayIcon(false));
+audio.addEventListener("ended", () => {
+  progFill.style.width = "0%";
+  tCur.textContent = "0:00";
+  tDur.textContent = "0:00";
+});
+
+// ── INITIAL VOLUME ──
+audio.volume = 0.85;
+
+// ── INIT ──
+loadShow();
+
+// ── POLL FOR NEW UPLOADS (every 30s) ──
+setInterval(async () => {
+  try {
+    const r = await fetch("/show-data");
+    const s = await r.json();
+    if (s.total > (showData?.total || 0)) {
+      showData = s;
+      document.getElementById("queue-count").textContent = `${s.total} voice${s.total!==1?"s":""}`;
+      renderQueue();
+    }
+  } catch(e) {}
+}, 30000);
+</script>
+</body>
+</html>

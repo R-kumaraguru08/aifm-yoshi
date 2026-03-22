@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI FM — Upload Your Voice</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#121212;--s1:#181818;--s2:#282828;--s3:#333;
+      --green:#1db954;--green2:#1ed760;--red:#ff6b6b;
+      --text:#fff;--text2:#b3b3b3;--text3:#535353;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding-bottom:40px;overflow-x:hidden}
+
+    /* TOPBAR */
+    .topbar{width:100%;max-width:600px;display:flex;align-items:center;justify-content:space-between;padding:18px 20px 0}
+    .topbar-logo{font-size:.72rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--text2)}
+    .topbar-nav{display:flex;gap:8px}
+    .topbar-nav a{color:var(--text2);text-decoration:none;font-size:.76rem;font-weight:500;padding:6px 14px;border-radius:50px;border:1px solid var(--s3);transition:all .2s}
+    .topbar-nav a:hover{color:var(--text);border-color:var(--text2)}
+
+    /* HERO */
+    .hero{width:100%;max-width:600px}
+    .hero img{width:100%;border-radius:0 0 20px 20px;display:block}
+
+    /* LISTEN BTN */
+    .section{width:100%;max-width:600px;padding:0 20px;margin-top:14px}
+    .btn-listen{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:linear-gradient(135deg,var(--green),#17a349);color:#fff;border:none;border-radius:14px;padding:16px;font-size:1rem;font-weight:700;cursor:pointer;text-decoration:none;box-shadow:0 4px 20px rgba(29,185,84,.3);transition:all .2s;letter-spacing:.3px}
+    .btn-listen:hover{transform:scale(1.02);box-shadow:0 6px 28px rgba(29,185,84,.4)}
+
+    /* WELCOME CARD */
+    .welcome-card{background:linear-gradient(135deg,#0a1a0f,#0d1220);border:1px solid #1db95422;border-radius:16px;padding:20px;text-align:center;margin-top:14px}
+    .welcome-title{font-size:1.2rem;font-weight:700;color:var(--green);margin-bottom:8px;letter-spacing:.3px}
+    .welcome-text{font-size:.88rem;color:var(--text2);line-height:1.8}
+
+    /* BADGE */
+    .badge-wrap{margin-top:14px}
+    .badge{background:var(--s2);border:1px solid var(--s3);color:var(--text2);padding:9px 16px;border-radius:10px;font-size:.76rem;text-align:center;letter-spacing:.3px}
+    .badge.full{border-color:#ff6b6b33;color:var(--red);background:#1a0a0a}
+    .badge.ok{border-color:#1db95433;color:var(--green);background:#0a1a0f}
+
+    /* UPLOAD CARD */
+    .card{background:var(--s1);border:1px solid #222;border-radius:16px;padding:22px;margin-top:14px}
+    .card-title{font-size:.9rem;font-weight:700;color:var(--text);margin-bottom:16px;letter-spacing:.5px;text-transform:uppercase}
+
+    .field-label{display:block;color:var(--text3);font-size:.68rem;margin:14px 0 5px;text-transform:uppercase;letter-spacing:.8px;font-weight:700}
+    .field-input{width:100%;background:var(--s2);border:1px solid var(--s3);border-radius:10px;padding:12px 14px;color:var(--text);font-size:.9rem;outline:none;transition:border .2s;font-family:'DM Sans',sans-serif}
+    .field-input:focus{border-color:var(--green)}
+    .field-input::placeholder{color:var(--text3)}
+
+    /* CHIPS */
+    .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+    .chip{background:var(--s2);border:1px solid var(--s3);color:var(--text2);padding:7px 14px;border-radius:20px;font-size:.74rem;cursor:pointer;transition:all .2s;user-select:none;font-family:'DM Sans',sans-serif}
+    .chip:hover{border-color:#1db95455;color:var(--green)}
+    .chip.sel{background:#0a1a0f;border-color:var(--green);color:var(--green)}
+
+    /* RECORDING */
+    .timer{color:var(--red);font-size:.88rem;text-align:center;margin:8px 0;display:none;font-weight:500}
+    .btn-rec{width:100%;background:var(--red);color:#fff;border:none;border-radius:50px;padding:13px;font-size:.9rem;cursor:pointer;font-weight:700;transition:all .2s;letter-spacing:.3px}
+    .btn-rec:hover{background:#ff4444}
+    .btn-rec.on{background:#cc0000;animation:rec-blink 1s infinite}
+    @keyframes rec-blink{0%,100%{opacity:1}50%{opacity:.65}}
+
+    .divider{text-align:center;color:var(--text3);margin:12px 0;font-size:.75rem;display:flex;align-items:center;gap:10px}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:#222}
+
+    .btn-file{display:block;width:100%;text-align:center;color:var(--text2);border:1px solid var(--s3);border-radius:50px;padding:12px;font-size:.88rem;cursor:pointer;transition:all .2s;font-weight:500}
+    .btn-file:hover{background:var(--s2);color:var(--text);border-color:var(--text2)}
+
+    audio{width:100%;margin-top:12px;border-radius:10px;display:none;accent-color:var(--green)}
+
+    /* NOTICE */
+    .notice{background:#0f0f0f;border:1px solid #1a1a1a;border-radius:10px;padding:12px;margin-top:14px;font-size:.74rem;color:var(--text3);line-height:1.6}
+    .notice strong{color:var(--text2)}
+
+    /* SUBMIT */
+    .btn-submit{width:100%;background:linear-gradient(135deg,var(--green),#17a349);color:#fff;border:none;border-radius:50px;padding:15px;font-size:.95rem;cursor:pointer;margin-top:14px;display:none;font-weight:700;box-shadow:0 4px 16px rgba(29,185,84,.3);transition:all .2s;letter-spacing:.3px}
+    .btn-submit:hover{transform:scale(1.02);box-shadow:0 6px 24px rgba(29,185,84,.4)}
+    .btn-submit:disabled{background:var(--s2);cursor:not-allowed;box-shadow:none;transform:none;color:var(--text3)}
+
+    .status{text-align:center;color:var(--text3);font-size:.82rem;margin-top:10px;min-height:20px}
+
+    /* SUCCESS CARD */
+    .success-card{background:linear-gradient(135deg,#0a1a0f,var(--s1));border:1px solid var(--green);border-radius:16px;padding:24px;text-align:center;display:none;margin-top:14px}
+    .q-num{font-size:3.5rem;font-weight:700;color:var(--green);margin:8px 0;text-shadow:0 0 20px rgba(29,185,84,.4)}
+    .share-row{display:flex;gap:8px;margin-top:14px;justify-content:center;flex-wrap:wrap}
+    .btn-wa{background:#25D366;color:#fff;border:none;border-radius:50px;padding:10px 18px;font-size:.82rem;cursor:pointer;text-decoration:none;display:inline-block;font-weight:700}
+    .btn-ig{background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;border:none;border-radius:50px;padding:10px 18px;font-size:.82rem;cursor:pointer;text-decoration:none;display:inline-block;font-weight:700}
+    .btn-copy{background:var(--s2);color:var(--text2);border:none;border-radius:50px;padding:10px 18px;font-size:.82rem;cursor:pointer;font-weight:500;transition:all .2s}
+    .btn-copy:hover{background:var(--s3);color:var(--text)}
+
+    /* BOTTOM NAV */
+    .bottom-nav{display:flex;gap:10px;margin-top:14px}
+    .btn-nav{flex:1;padding:11px;border-radius:50px;font-size:.82rem;cursor:pointer;border:1px solid var(--s3);background:transparent;color:var(--text2);text-align:center;text-decoration:none;transition:all .2s;font-weight:500}
+    .btn-nav:hover{background:var(--s2);color:var(--text);border-color:var(--text2)}
+
+    ::-webkit-scrollbar{width:5px}
+    ::-webkit-scrollbar-thumb{background:var(--s3);border-radius:3px}
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <span class="topbar-logo">🎙️ AI FM</span>
+  <div class="topbar-nav">
+    <a href="/player">📻 Player</a>
+    <a href="/history">📅 History</a>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <img src="/yoshi.png" alt="RJ Yoshi" onerror="this.style.display='none'">
+</div>
+
+<!-- LISTEN -->
+<div class="section">
+  <a href="/player" class="btn-listen">📻 Listen to Today's Show</a>
+</div>
+
+<!-- WELCOME -->
+<div class="section">
+  <div class="welcome-card">
+    <div class="welcome-title">🎙️ WELCOME TO AI FM</div>
+    <div class="welcome-text">
+      I am your <strong style="color:var(--green)">RJ Yoshi!</strong><br>
+      Upload your audio —<br>
+      <strong style="color:var(--green)">Your voice will be heard all over the world!</strong>
+    </div>
+  </div>
+</div>
+
+<!-- BADGE -->
+<div class="section badge-wrap">
+  <div class="badge" id="badge">Loading...</div>
+</div>
+
+<!-- UPLOAD CARD -->
+<div class="section">
+  <div class="card">
+    <div class="card-title">🎤 Upload Your Voice</div>
+
+    <span class="field-label">Your Name *</span>
+    <input class="field-input" type="text" id="name" placeholder="Enter your name" maxlength="50">
+
+    <span class="field-label">What will you talk about? *</span>
+    <div class="chips">
+      <div class="chip" onclick="pick(this,'Cricket')">🏏 Cricket</div>
+      <div class="chip" onclick="pick(this,'Cinema')">🎬 Cinema</div>
+      <div class="chip" onclick="pick(this,'Music')">🎵 Music</div>
+      <div class="chip" onclick="pick(this,'Comedy')">😂 Comedy</div>
+      <div class="chip" onclick="pick(this,'My Dream')">💭 Dream</div>
+      <div class="chip" onclick="pick(this,'Current Affairs')">📰 News</div>
+      <div class="chip" onclick="pick(this,'Motivation')">🔥 Motivation</div>
+      <div class="chip" onclick="pick(this,'Love')">❤️ Love</div>
+      <div class="chip" onclick="pick(this,'Food')">🍛 Food</div>
+      <div class="chip" onclick="pick(this,'Technology')">💻 Tech</div>
+      <div class="chip" onclick="pick(this,'Travel')">✈️ Travel</div>
+      <div class="chip" onclick="pick(this,'Other')">💬 Other</div>
+    </div>
+    <input class="field-input" type="text" id="caption" placeholder="Or type your own topic..." maxlength="100" style="margin-top:10px">
+
+    <span class="field-label">Your Voice * (max 3 minutes)</span>
+    <div class="timer" id="timer">⏺ 0:00 / 3:00</div>
+    <button class="btn-rec" id="btn-rec" onclick="toggleRec()">🎤 Start Recording</button>
+
+    <div class="divider">or</div>
+
+    <label for="file-in" class="btn-file">📁 Upload Audio File</label>
+    <input type="file" id="file-in" accept="audio/*" style="display:none" onchange="handleFile(this)">
+    <audio id="preview" controls></audio>
+
+    <div class="notice">
+      ⚠️ <strong>Public Notice:</strong> Your uploaded audio will be
+      <strong>publicly accessible</strong> on AI FM. Anyone who listens
+      to the show can hear and <strong>download</strong> your voice.
+      Do not upload private or sensitive content. By uploading, you agree
+      your voice may be heard and downloaded worldwide. 🌍
+    </div>
+
+    <button class="btn-submit" id="btn-submit" onclick="submitVoice()">
+      🚀 Go Live on AI FM!
+    </button>
+    <div class="status" id="status"></div>
+
+    <!-- SUCCESS -->
+    <div class="success-card" id="success-card">
+      <div style="font-size:1.4rem">🎉</div>
+      <div style="color:var(--text3);font-size:.75rem;margin-top:6px;letter-spacing:.5px;text-transform:uppercase">Your Queue Number</div>
+      <div class="q-num" id="q-num">#0</div>
+      <div style="color:var(--text3);font-size:.76rem">Share with friends to listen live!</div>
+      <div class="share-row">
+        <a class="btn-wa" id="wa-btn" href="#" target="_blank">📲 WhatsApp</a>
+        <a class="btn-ig" href="https://www.instagram.com/" target="_blank">📸 Instagram</a>
+        <button class="btn-copy" onclick="copyLink()">📋 Copy Link</button>
+      </div>
+      <a href="/player" style="display:block;color:var(--green);margin-top:14px;font-size:.86rem;text-decoration:none;font-weight:500">
+        📻 Go Listen to the Show →
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="section">
+  <div class="bottom-nav">
+    <a href="/player"  class="btn-nav">📻 Player</a>
+    <a href="/history" class="btn-nav">📅 History</a>
+  </div>
+</div>
+
+<script>
+let blob=null,isRec=false,mediaRec=null,chunks=[],timerInt=null,secs=0;
+
+async function loadCount(){
+  try{
+    const r=await fetch("/count");
+    const d=await r.json();
+    const badge=document.getElementById("badge");
+    if(d.full){
+      badge.textContent="🔴 Today's show is full! Come back tomorrow!";
+      badge.className="badge full";
+    } else {
+      badge.textContent=`🎙️ ${d.total}/100 — ${d.remaining} spots remaining today!`;
+      badge.className="badge ok";
+    }
+  }catch(e){
+    document.getElementById("badge").textContent="🎙️ Upload your voice!";
+  }
+}
+loadCount();
+
+function pick(el,val){
+  document.querySelectorAll(".chip").forEach(c=>c.classList.remove("sel"));
+  el.classList.add("sel");
+  document.getElementById("caption").value=val;
+}
+
+async function toggleRec(){
+  if(!isRec){
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      mediaRec=new MediaRecorder(stream);
+      chunks=[];
+      mediaRec.ondataavailable=e=>chunks.push(e.data);
+      mediaRec.onstop=()=>{
+        blob=new Blob(chunks,{type:"audio/webm"});
+        showPrev(URL.createObjectURL(blob));
+        stream.getTracks().forEach(t=>t.stop());
+      };
+      mediaRec.start();
+      isRec=true;
+      document.getElementById("btn-rec").textContent="⏹️ Stop Recording";
+      document.getElementById("btn-rec").classList.add("on");
+      document.getElementById("timer").style.display="block";
+      secs=0;
+      timerInt=setInterval(()=>{
+        secs++;
+        const m=Math.floor(secs/60),s=secs%60;
+        document.getElementById("timer").textContent=`⏺ ${m}:${s.toString().padStart(2,"0")} / 3:00`;
+        if(secs>=180) toggleRec();
+      },1000);
+    }catch(e){
+      document.getElementById("status").textContent="❌ Microphone access denied!";
+    }
+  } else {
+    mediaRec.stop();
+    isRec=false;
+    clearInterval(timerInt);
+    document.getElementById("btn-rec").textContent="🎤 Record Again";
+    document.getElementById("btn-rec").classList.remove("on");
+    document.getElementById("timer").style.display="none";
+  }
+}
+
+function handleFile(input){
+  const f=input.files[0];
+  if(!f) return;
+  blob=f;
+  showPrev(URL.createObjectURL(f));
+  document.getElementById("status").textContent=`✅ ${f.name}`;
+}
+
+function showPrev(url){
+  const p=document.getElementById("preview");
+  p.src=url;
+  p.style.display="block";
+  document.getElementById("btn-submit").style.display="block";
+  document.getElementById("status").textContent="✅ Ready to upload!";
+}
+
+async function submitVoice(){
+  const name=document.getElementById("name").value.trim();
+  const caption=document.getElementById("caption").value.trim();
+  if(!name){alert("Please enter your name!");return;}
+  if(!caption){alert("Please select or type your topic!");return;}
+  if(!blob){alert("Please record or upload your voice!");return;}
+
+  const btn=document.getElementById("btn-submit");
+  btn.disabled=true;
+  btn.textContent="⏳ Uploading...";
+  document.getElementById("status").textContent="🎙️ Going live on AI FM...";
+
+  const form=new FormData();
+  form.append("name",name);
+  form.append("caption",caption);
+  form.append("audio",blob,"voice.webm");
+
+  try{
+    const r=await fetch("/upload",{method:"POST",body:form});
+    const res=await r.json();
+    if(res.success){
+      document.getElementById("success-card").style.display="block";
+      document.getElementById("q-num").textContent=`#${res.queue}`;
+      document.getElementById("status").textContent="";
+      btn.style.display="none";
+      const url=`${window.location.origin}/player`;
+      const msg=`🎙️ Listen to my voice on AI FM!\nQueue #${res.queue} — ${name} talking about ${caption}\n${url}`;
+      document.getElementById("wa-btn").href=`https://wa.me/?text=${encodeURIComponent(msg)}`;
+      // Refresh badge
+      loadCount();
+    } else {
+      document.getElementById("status").textContent=`❌ ${res.error}`;
+      btn.disabled=false;
+      btn.textContent="🚀 Go Live on AI FM!";
+    }
+  }catch(e){
+    document.getElementById("status").textContent="❌ Upload failed! Try again.";
+    btn.disabled=false;
+    btn.textContent="🚀 Go Live on AI FM!";
+  }
+}
+
+function copyLink(){
+  navigator.clipboard.writeText(`${window.location.origin}/player`);
+  alert("Link copied! 📋");
+}
+</script>
+</body>
+</html>

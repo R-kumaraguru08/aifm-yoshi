@@ -1,0 +1,14 @@
+flask
+flask-cors
+python-dotenv
+azure-storage-blob
+azure-cosmos
+apscheduler
+edge-tts
+groq
+requests
+pydub
+lameenc
+soundfile
+numpy
+gunicorn
