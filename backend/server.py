@@ -24,8 +24,8 @@ CORS(app)
 # =============================================
 # 📁 PATHS
 # =============================================
-BASE_DIR     = Path(__file__).parent          # /app (backend folder)
-FRONTEND_DIR = BASE_DIR / "frontend"  # /app/../frontend
+BASE_DIR     = Path(__file__).parent        # /app/backend
+FRONTEND_DIR = BASE_DIR.parent / "frontend" # /app/../frontend
 TEMP_DIR     = Path("/tmp/aifm_audio")
 TEMP_DIR.mkdir(exist_ok=True)
 MAX_DAILY    = 100
