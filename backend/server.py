@@ -21,19 +21,39 @@ load_dotenv("../.env")
 app = Flask(__name__)
 CORS(app)
 
-TEMP_DIR = Path("/tmp/aifm_audio")
+# =============================================
+# 📁 PATHS
+# =============================================
+BASE_DIR     = Path(__file__).parent          # /app (backend folder)
+FRONTEND_DIR = BASE_DIR.parent / "frontend"   # /app/../frontend
+TEMP_DIR     = Path("/tmp/aifm_audio")
 TEMP_DIR.mkdir(exist_ok=True)
-MAX_DAILY = 100
+MAX_DAILY    = 100
+
+# =============================================
+# 🔍 DEBUG
+# =============================================
+@app.route("/debug")
+def debug():
+    files = []
+    for root, dirs, fs in os.walk(str(BASE_DIR.parent)):
+        for f in fs:
+            files.append(os.path.join(root, f))
+    return jsonify({
+        "base_dir":     str(BASE_DIR),
+        "frontend_dir": str(FRONTEND_DIR),
+        "frontend_exists": FRONTEND_DIR.exists(),
+        "files": files[:50]
+    })
 
 # =============================================
 # 🗜️ COMPRESS AUDIO
 # =============================================
 def compress_audio(input_path: str, output_path: str) -> str:
-    # Find ffmpeg — checks PATH first, then common Windows locations
-    ffmpeg_cmd = r"C:\ffmpeg\bin\ffmpeg.exe"
-    if not Path(ffmpeg_cmd).exists():
-        ffmpeg_cmd = shutil.which("ffmpeg")
-
+    ffmpeg_cmd = (
+        shutil.which("ffmpeg") or
+        r"C:\ffmpeg\bin\ffmpeg.exe"
+    )
 
     if not ffmpeg_cmd or not Path(ffmpeg_cmd).exists():
         print("⚠️ ffmpeg not found — uploading raw audio")
@@ -52,7 +72,7 @@ def compress_audio(input_path: str, output_path: str) -> str:
 
         if result.returncode == 0 and Path(output_path).exists():
             size_kb = Path(output_path).stat().st_size / 1024
-            print(f"✅ Compressed → {output_path} ({size_kb:.0f} KB)")
+            print(f"✅ Compressed → {size_kb:.0f} KB")
             return output_path
         else:
             print(f"⚠️ ffmpeg failed: {result.stderr[:200]}")
@@ -87,8 +107,8 @@ def prepare_intro():
         print("🎙️ Generating fresh Yoshi intro...")
         path = generate_speech(FIXED_INTRO_TEXT, "yoshi_fixed_intro.mp3", "opening")
         if path and Path(path).exists():
-            compressed = str(TEMP_DIR / "yoshi_fixed_intro_c.mp3")
-            final_path = compress_audio(path, compressed)
+            compressed    = str(TEMP_DIR / "yoshi_fixed_intro_c.mp3")
+            final_path    = compress_audio(path, compressed)
             compressed_ok = final_path != path
             if compressed_ok:
                 Path(path).unlink(missing_ok=True)
@@ -112,22 +132,22 @@ def prepare_intro():
 # =============================================
 @app.route("/")
 def upload_page():
-    return send_from_directory("../frontend", "upload.html")
+    return send_from_directory(str(FRONTEND_DIR), "upload.html")
 
 @app.route("/player")
 def player_page():
-    return send_from_directory("../frontend", "player.html")
+    return send_from_directory(str(FRONTEND_DIR), "player.html")
 
 @app.route("/history")
 def history_page():
-    return send_from_directory("../frontend", "history.html")
+    return send_from_directory(str(FRONTEND_DIR), "history.html")
 
 @app.route("/yoshi.png")
 def yoshi_image():
-    return send_from_directory("../frontend", "yoshi.png")
+    return send_from_directory(str(FRONTEND_DIR), "yoshi.png")
 
 # =============================================
-# ✅ UPLOAD — no per-user Yoshi intro
+# ✅ UPLOAD
 # =============================================
 @app.route("/upload", methods=["POST"])
 def upload():
@@ -158,12 +178,11 @@ def upload():
             f.write(audio.read())
         print(f"💾 Saved raw: {raw_path} ({raw_path.stat().st_size / 1024:.0f} KB)")
 
-        # 🗜️ Try compress — fallback to raw if ffmpeg missing
+        # 🗜️ Compress
         final_path    = compress_audio(str(raw_path), str(comp_path))
         compressed_ok = final_path != str(raw_path)
-
         if compressed_ok:
-            raw_path.unlink(missing_ok=True)  # only delete raw if compression worked
+            raw_path.unlink(missing_ok=True)
 
         # ☁️ Upload to Azure Blob
         with open(final_path, "rb") as f:
@@ -171,7 +190,7 @@ def upload():
                 f.read(), comp_filename,
                 VOICES_CONTAINER, "audio/mpeg"
             )
-        Path(final_path).unlink(missing_ok=True)  # cleanup temp
+        Path(final_path).unlink(missing_ok=True)
 
         if not audio_url:
             return jsonify({"error": "Upload to cloud failed! Try again."}), 500
@@ -279,7 +298,7 @@ atexit.register(lambda: scheduler.shutdown())
 # =============================================
 if __name__ == "__main__":
     print("🎙️ AI FM Starting...")
-    print(f"🗜️ ffmpeg: {shutil.which('ffmpeg') or 'NOT IN PATH — will upload raw'}")
+    print(f"📁 Frontend: {FRONTEND_DIR} (exists: {FRONTEND_DIR.exists()})")
     print("⏰ Auto reset at midnight daily!")
     prepare_intro()
-    app.run(debug=False, port=5000)
+    app.run(debug=False, port=5000)         
